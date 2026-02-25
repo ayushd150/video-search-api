@@ -5,11 +5,23 @@ import os
 
 app = FastAPI(title="Sentiment API")
 
+# -------- Health route (prevents Render timeout) --------
+@app.get("/")
+def health():
+    return {"status": "alive"}
+
+# -------- OpenRouter client --------
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY"),
 )
 
+# -------- Warm startup --------
+@app.on_event("startup")
+def warmup():
+    print("Server started")
+
+# -------- Schemas --------
 class CommentRequest(BaseModel):
     comment: str
 
@@ -37,6 +49,7 @@ schema = {
     }
 }
 
+# -------- Main endpoint --------
 @app.post("/comment", response_model=CommentResponse)
 def analyze_comment(data: CommentRequest):
 
@@ -47,7 +60,7 @@ def analyze_comment(data: CommentRequest):
         response = client.chat.completions.create(
             model="openai/gpt-4.1-mini",
             messages=[
-                {"role": "system", "content": "Classify sentiment strictly."},
+                {"role": "system", "content": "Return sentiment strictly based on meaning. Rating: 5 very positive, 4 positive, 3 neutral, 2 negative, 1 very negative."},
                 {"role": "user", "content": data.comment}
             ],
             response_format={
