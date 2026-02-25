@@ -94,6 +94,7 @@ def get_transcript(video_url: str):
 # =========================
 
 @app.post("/ask", response_model=AskResponse)
+@app.post("/ask/", response_model=AskResponse)
 def ask_video(data: AskRequest):
 
     transcript_data = get_transcript(data.video_url)
